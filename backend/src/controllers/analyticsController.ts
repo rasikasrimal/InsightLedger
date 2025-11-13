@@ -1,0 +1,315 @@
+import { Response } from 'express';
+import Transaction from '../models/Transaction';
+import Budget from '../models/Budget';
+import { AuthRequest } from '../types';
+
+export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const [income, expenses, transactionCount] = await Promise.all([
+      Transaction.aggregate([
+        {
+          $match: {
+            userId,
+            type: 'income',
+            date: { $gte: startOfMonth, $lte: endOfMonth }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            userId,
+            type: 'expense',
+            date: { $gte: startOfMonth, $lte: endOfMonth }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.countDocuments({
+        userId,
+        date: { $gte: startOfMonth, $lte: endOfMonth }
+      })
+    ]);
+
+    const totalIncome = income[0]?.total || 0;
+    const totalExpenses = expenses[0]?.total || 0;
+    const balance = totalIncome - totalExpenses;
+
+    res.json({
+      period: 'monthly',
+      startDate: startOfMonth,
+      endDate: endOfMonth,
+      totalIncome,
+      totalExpenses,
+      balance,
+      transactionCount
+    });
+  } catch (error) {
+    console.error('Get dashboard stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+  }
+};
+
+export const getSpendingByCategory = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const { startDate, endDate } = req.query;
+
+    const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(1));
+    const end = endDate ? new Date(endDate as string) : new Date();
+
+    const spendingByCategory = await Transaction.aggregate([
+      {
+        $match: {
+          userId,
+          type: 'expense',
+          date: { $gte: start, $lte: end }
+        }
+      },
+      {
+        $group: {
+          _id: '$categoryId',
+          total: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $unwind: '$category'
+      },
+      {
+        $project: {
+          categoryId: '$_id',
+          categoryName: '$category.name',
+          categoryIcon: '$category.icon',
+          categoryColor: '$category.color',
+          total: 1,
+          count: 1
+        }
+      },
+      {
+        $sort: { total: -1 }
+      }
+    ]);
+
+    res.json(spendingByCategory);
+  } catch (error) {
+    console.error('Get spending by category error:', error);
+    res.status(500).json({ error: 'Failed to fetch spending by category' });
+  }
+};
+
+export const getMonthlyTrends = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const months = parseInt(req.query.months as string) || 6;
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    const trends = await Transaction.aggregate([
+      {
+        $match: {
+          userId,
+          date: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$date' },
+            month: { $month: '$date' },
+            type: '$type'
+          },
+          total: { $sum: '$amount' }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    const formattedTrends = trends.reduce((acc: any[], item) => {
+      const monthKey = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+      let monthData = acc.find((m) => m.month === monthKey);
+
+      if (!monthData) {
+        monthData = { month: monthKey, income: 0, expenses: 0 };
+        acc.push(monthData);
+      }
+
+      if (item._id.type === 'income') {
+        monthData.income = item.total;
+      } else {
+        monthData.expenses = item.total;
+      }
+
+      return acc;
+    }, []);
+
+    res.json(formattedTrends);
+  } catch (error) {
+    console.error('Get monthly trends error:', error);
+    res.status(500).json({ error: 'Failed to fetch monthly trends' });
+  }
+};
+
+export const getAIInsights = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const [currentMonthExpenses, lastMonthExpenses, topCategories, budgetStatus] = await Promise.all([
+      Transaction.aggregate([
+        {
+          $match: {
+            userId,
+            type: 'expense',
+            date: { $gte: startOfMonth }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            userId,
+            type: 'expense',
+            date: { $gte: lastMonthStart, $lte: lastMonthEnd }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            userId,
+            type: 'expense',
+            date: { $gte: startOfMonth }
+          }
+        },
+        {
+          $group: {
+            _id: '$categoryId',
+            total: { $sum: '$amount' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        { $unwind: '$category' },
+        { $sort: { total: -1 } },
+        { $limit: 3 }
+      ]),
+      Budget.find({
+        userId,
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      }).populate('categoryId')
+    ]);
+
+    const insights = [];
+
+    const currentTotal = currentMonthExpenses[0]?.total || 0;
+    const lastTotal = lastMonthExpenses[0]?.total || 0;
+    
+    if (lastTotal > 0) {
+      const percentChange = ((currentTotal - lastTotal) / lastTotal) * 100;
+      if (percentChange > 20) {
+        insights.push({
+          type: 'warning',
+          title: 'Spending Alert',
+          message: `Your spending is up ${percentChange.toFixed(1)}% compared to last month. Consider reviewing your expenses.`
+        });
+      } else if (percentChange < -10) {
+        insights.push({
+          type: 'success',
+          title: 'Great Job!',
+          message: `Your spending is down ${Math.abs(percentChange).toFixed(1)}% compared to last month. Keep up the good work!`
+        });
+      }
+    }
+
+    if (topCategories.length > 0) {
+      const topCategory = topCategories[0];
+      insights.push({
+        type: 'info',
+        title: 'Top Spending Category',
+        message: `You spent $${topCategory.total.toFixed(2)} on ${topCategory.category.name} this month.`
+      });
+    }
+
+    for (const budget of budgetStatus) {
+      const spent = await Transaction.aggregate([
+        {
+          $match: {
+            userId: budget.userId,
+            categoryId: budget.categoryId,
+            type: 'expense',
+            date: {
+              $gte: budget.startDate,
+              $lte: budget.endDate
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$amount' }
+          }
+        }
+      ]);
+
+      const spentAmount = spent[0]?.total || 0;
+      const percentUsed = (spentAmount / budget.amount) * 100;
+
+      if (percentUsed > 90) {
+        insights.push({
+          type: 'warning',
+          title: 'Budget Alert',
+          message: `You've used ${percentUsed.toFixed(1)}% of your budget for ${(budget.categoryId as any).name}.`
+        });
+      } else if (percentUsed > 75) {
+        insights.push({
+          type: 'info',
+          title: 'Budget Notice',
+          message: `You've used ${percentUsed.toFixed(1)}% of your budget for ${(budget.categoryId as any).name}.`
+        });
+      }
+    }
+
+    if (insights.length === 0) {
+      insights.push({
+        type: 'success',
+        title: 'Looking Good!',
+        message: 'Your finances are on track. Keep monitoring your spending habits.'
+      });
+    }
+
+    res.json({ insights });
+  } catch (error) {
+    console.error('Get AI insights error:', error);
+    res.status(500).json({ error: 'Failed to generate insights' });
+  }
+};
