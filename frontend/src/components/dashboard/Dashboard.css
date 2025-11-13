@@ -1,0 +1,18 @@
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.insights-list .alert {
+  margin-bottom: 0;
+}
+
+.insights-list .alert strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.insights-list .alert p {
+  margin: 0;
+}
