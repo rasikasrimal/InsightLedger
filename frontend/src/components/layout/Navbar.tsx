@@ -27,6 +27,7 @@ const Navbar: React.FC = () => {
               <li><Link to="/budgets">Budgets</Link></li>
               <li><Link to="/categories">Categories</Link></li>
               <li><Link to="/analytics">Analytics</Link></li>
+              <li><Link to="/ai-chat">AI Chat</Link></li>
             </ul>
             <div className="navbar-user">
               <span>Hi, {user?.name}</span>
