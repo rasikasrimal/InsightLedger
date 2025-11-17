@@ -4,8 +4,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import './AuthForms.css';
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Prefill demo credentials for quick access; fields remain editable
+  const [email, setEmail] = useState('demo@example.com');
+  const [password, setPassword] = useState('DemoPass123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();

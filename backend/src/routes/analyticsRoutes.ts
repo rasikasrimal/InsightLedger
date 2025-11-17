@@ -3,7 +3,8 @@ import {
   getDashboardStats,
   getSpendingByCategory,
   getMonthlyTrends,
-  getAIInsights
+  getAIInsights,
+  askAI
 } from '../controllers/analyticsController';
 import { authenticate } from '../middleware/auth';
 
@@ -15,5 +16,6 @@ router.get('/dashboard', getDashboardStats);
 router.get('/spending-by-category', getSpendingByCategory);
 router.get('/monthly-trends', getMonthlyTrends);
 router.get('/insights', getAIInsights);
+router.post('/ask', askAI);
 
 export default router;
