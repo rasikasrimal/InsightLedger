@@ -24,5 +24,10 @@ export const analyticsAPI = {
   getInsights: async (): Promise<{ insights: Insight[] }> => {
     const response = await apiClient.get<{ insights: Insight[] }>('/analytics/insights');
     return response.data;
+  },
+
+  askAI: async (question: string): Promise<{ answer: string }> => {
+    const response = await apiClient.post<{ answer: string }>('/analytics/ask', { question });
+    return response.data;
   }
 };

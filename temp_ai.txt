@@ -1,0 +1,20 @@
+﻿/* AI Insights Panel */}
+      <div className="card ai-panel">
+        <h2>ðŸ¤– AI Financial Insights</h2>
+        <div className="ai-query-section">
+          <p className="ai-description">
+            Ask AI anything about your finances and get intelligent insights based on your data.
+          </p>
+          <div className="ai-query-input">
+            <input
+              type="text"
+              placeholder="e.g., Where did I overspend this month?"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAiQuery()}
+            />
+            <button className="btn btn-primary" onClick={handleAiQuery}>
+              Ask AI
+            </button>
+          </div>
+          <div

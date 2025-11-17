@@ -1,11 +1,19 @@
 import { Response } from 'express';
+import { Types } from 'mongoose';
 import Transaction from '../models/Transaction';
 import Budget from '../models/Budget';
 import { AuthRequest } from '../types';
+import { generateFinancialAnswer } from '../services/geminiService';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId);
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -14,7 +22,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       Transaction.aggregate([
         {
           $match: {
-            userId,
+            userId: userObjectId,
             type: 'income',
             date: { $gte: startOfMonth, $lte: endOfMonth }
           }
@@ -24,7 +32,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
       Transaction.aggregate([
         {
           $match: {
-            userId,
+            userId: userObjectId,
             type: 'expense',
             date: { $gte: startOfMonth, $lte: endOfMonth }
           }
@@ -32,7 +40,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]),
       Transaction.countDocuments({
-        userId,
+        userId: userObjectId,
         date: { $gte: startOfMonth, $lte: endOfMonth }
       })
     ]);
@@ -59,6 +67,11 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
 export const getSpendingByCategory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId);
     const { startDate, endDate } = req.query;
 
     const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(1));
@@ -67,7 +80,7 @@ export const getSpendingByCategory = async (req: AuthRequest, res: Response): Pr
     const spendingByCategory = await Transaction.aggregate([
       {
         $match: {
-          userId,
+          userId: userObjectId,
           type: 'expense',
           date: { $gte: start, $lte: end }
         }
@@ -115,6 +128,11 @@ export const getSpendingByCategory = async (req: AuthRequest, res: Response): Pr
 export const getMonthlyTrends = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId);
     const months = parseInt(req.query.months as string) || 6;
 
     const startDate = new Date();
@@ -123,7 +141,7 @@ export const getMonthlyTrends = async (req: AuthRequest, res: Response): Promise
     const trends = await Transaction.aggregate([
       {
         $match: {
-          userId,
+          userId: userObjectId,
           date: { $gte: startDate }
         }
       },
@@ -170,6 +188,11 @@ export const getMonthlyTrends = async (req: AuthRequest, res: Response): Promise
 export const getAIInsights = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -179,7 +202,7 @@ export const getAIInsights = async (req: AuthRequest, res: Response): Promise<vo
       Transaction.aggregate([
         {
           $match: {
-            userId,
+            userId: userObjectId,
             type: 'expense',
             date: { $gte: startOfMonth }
           }
@@ -189,7 +212,7 @@ export const getAIInsights = async (req: AuthRequest, res: Response): Promise<vo
       Transaction.aggregate([
         {
           $match: {
-            userId,
+            userId: userObjectId,
             type: 'expense',
             date: { $gte: lastMonthStart, $lte: lastMonthEnd }
           }
@@ -199,7 +222,7 @@ export const getAIInsights = async (req: AuthRequest, res: Response): Promise<vo
       Transaction.aggregate([
         {
           $match: {
-            userId,
+            userId: userObjectId,
             type: 'expense',
             date: { $gte: startOfMonth }
           }
@@ -223,7 +246,7 @@ export const getAIInsights = async (req: AuthRequest, res: Response): Promise<vo
         { $limit: 3 }
       ]),
       Budget.find({
-        userId,
+        userId: userObjectId,
         startDate: { $lte: now },
         endDate: { $gte: now }
       }).populate('categoryId')
@@ -311,5 +334,122 @@ export const getAIInsights = async (req: AuthRequest, res: Response): Promise<vo
   } catch (error) {
     console.error('Get AI insights error:', error);
     res.status(500).json({ error: 'Failed to generate insights' });
+  }
+};
+
+export const askAI = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { question } = req.body;
+    if (!question || typeof question !== 'string' || question.trim().length < 3) {
+      res.status(400).json({ error: 'Please provide a valid question.' });
+      return;
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [incomeAgg, expenseAgg, categorySpend, recentTransactions] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'income', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'expense', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'expense', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: '$categoryId', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+        { $sort: { total: -1 } },
+        { $limit: 5 }
+      ]),
+      Transaction.find({ userId: userObjectId })
+        .populate('categoryId')
+        .sort({ date: -1 })
+        .limit(20)
+        .lean()
+    ]);
+
+    const budgets = await Budget.find({
+      userId: userObjectId,
+      startDate: { $lte: now },
+      endDate: { $gte: now }
+    })
+      .populate('categoryId')
+      .lean();
+
+    const totalIncome = incomeAgg[0]?.total || 0;
+    const totalExpenses = expenseAgg[0]?.total || 0;
+    const balance = totalIncome - totalExpenses;
+
+    const categorySummary = categorySpend
+      .map((c: any) => `- ${c.category?.name || 'Uncategorized'}: $${c.total.toFixed(2)} across ${c.count} expenses`)
+      .join('\n');
+
+    const budgetSummary = budgets
+      .map((b) => {
+        const category: any = b.categoryId;
+        return `- ${category?.name || 'Category'} budget $${b.amount} (${b.period}) from ${b.startDate?.toISOString?.().slice(0, 10)} to ${b.endDate
+          ?.toISOString?.()
+          .slice(0, 10)}`;
+      })
+      .join('\n');
+
+    const recentSummary = recentTransactions
+      .map((t) => {
+        const category: any = t.categoryId;
+        return `${t.type === 'income' ? 'Income' : 'Expense'} $${t.amount} for ${t.description} in ${category?.name || 'Uncategorized'} on ${new Date(
+          t.date
+        ).toISOString().slice(0, 10)}`;
+      })
+      .join('\n');
+
+    const prompt = `
+You are a concise personal finance assistant. Use the user's data below to answer their question clearly and helpfully.
+
+User question: """${question.trim()}"""
+
+Current month summary:
+- Income: $${totalIncome.toFixed(2)} (transactions: ${incomeAgg[0]?.count || 0})
+- Expenses: $${totalExpenses.toFixed(2)} (transactions: ${expenseAgg[0]?.count || 0})
+- Balance: $${balance.toFixed(2)}
+
+Top expense categories this month:
+${categorySummary || '- No expenses yet.'}
+
+Active budgets:
+${budgetSummary || '- No active budgets.'}
+
+Recent transactions (newest first):
+${recentSummary || 'No recent transactions.'}
+
+Guidelines:
+- Keep it short (4-6 sentences).
+- If suggesting actions, make them concrete and prioritized.
+- Avoid hallucinating data not present in the context.
+- Answer in plain text (no markdown bullets needed by default).
+`;
+
+    const answer = await generateFinancialAnswer(prompt);
+    res.json({ answer });
+  } catch (error) {
+    console.error('Ask AI error:', error);
+    res.status(502).json({ error: (error as Error)?.message || 'Failed to get AI response' });
   }
 };

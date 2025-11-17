@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
+import ChatBubble from './components/ChatBubble';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Dashboard from './components/dashboard/Dashboard';
@@ -72,6 +73,7 @@ function App() {
               }
             />
           </Routes>
+          <ChatBubble />
         </div>
       </AuthProvider>
     </Router>

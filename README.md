@@ -68,6 +68,7 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/insightledger
 JWT_SECRET=your-secret-key-change-in-production
 FRONTEND_URL=http://localhost:3000
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ### 3. Frontend Setup

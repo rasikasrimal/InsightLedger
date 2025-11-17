@@ -13,7 +13,10 @@ const AnalyticsPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [aiQuery, setAiQuery] = useState('');
+  const [aiQuery, setAiQuery] = useState('Where did I overspend this month?');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [aiError, setAiError] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -47,9 +50,19 @@ const AnalyticsPage: React.FC = () => {
     return { incomeChange, expenseChange };
   };
 
-  const handleAiQuery = () => {
-    // Placeholder for AI query functionality
-    alert(`AI Query: "${aiQuery}"\n\nThis feature will analyze your financial data and provide insights!`);
+  const handleAiQuery = async () => {
+    if (!aiQuery.trim()) return;
+    setAiError('');
+    setAiAnswer('');
+    setAiLoading(true);
+    try {
+      const response = await analyticsAPI.askAI(aiQuery.trim());
+      setAiAnswer(response.answer);
+    } catch (error: any) {
+      setAiError(error.response?.data?.error || 'Failed to get AI response. Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const trendChange = calculateTrendChange();
@@ -270,10 +283,10 @@ const AnalyticsPage: React.FC = () => {
               placeholder="e.g., Where did I overspend this month?"
               value={aiQuery}
               onChange={(e) => setAiQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAiQuery()}
+              onKeyDown={(e) => e.key === 'Enter' && handleAiQuery()}
             />
-            <button className="btn btn-primary" onClick={handleAiQuery}>
-              Ask AI
+            <button className="btn btn-primary" onClick={handleAiQuery} disabled={aiLoading}>
+              {aiLoading ? 'Thinking...' : 'Ask AI'}
             </button>
           </div>
           <div className="ai-suggestions">
@@ -305,6 +318,13 @@ const AnalyticsPage: React.FC = () => {
               </button>
             </div>
           </div>
+          {aiError && <div className="alert alert-error">{aiError}</div>}
+          {aiAnswer && (
+            <div className="ai-answer">
+              <h4>AI Response</h4>
+              <p>{aiAnswer}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

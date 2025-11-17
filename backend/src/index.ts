@@ -5,6 +5,9 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
+import bcrypt from 'bcryptjs';
+import User from './models/User';
+import { UserRole } from './types';
 
 import authRoutes from './routes/authRoutes';
 import transactionRoutes from './routes/transactionRoutes';
@@ -44,9 +47,35 @@ app.use('/api/analytics', analyticsRoutes);
 
 app.use(errorHandler);
 
+async function ensureDemoUser() {
+  try {
+    const demoEmail = process.env.DEMO_EMAIL || 'demo@example.com';
+    const demoPassword = process.env.DEMO_PASSWORD || 'password123';
+    const demoName = process.env.DEMO_NAME || 'Demo User';
+
+    const existing = await User.findOne({ email: demoEmail });
+    if (existing) {
+      console.log(`Demo user already exists (${demoEmail})`);
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(demoPassword, 10);
+    await User.create({
+      email: demoEmail,
+      password: hashedPassword,
+      name: demoName,
+      role: UserRole.USER,
+    });
+    console.log(`Demo user created (${demoEmail} / ${demoPassword})`);
+  } catch (error) {
+    console.error('Failed to ensure demo user:', error);
+  }
+}
+
 const startServer = async () => {
   try {
     await connectDB();
+    await ensureDemoUser();
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
