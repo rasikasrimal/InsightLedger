@@ -220,6 +220,13 @@ The platform provides intelligent insights including:
   - HTTP status code reporting (401, 500, network errors)
   - Visible error notifications on the UI
 
+### AI Chat & Suggestion Prompts
+
+- The AI chat blends your live financial data with distilled principles from popular personal finance books (e.g., **Rich Dad Poor Dad**, **The Psychology of Money**, and similar titles) to surface click-ready suggestions you can ask.
+- Suggestions adjust based on your recent conversation turns and the current month’s budgets/spending, keeping prompts actionable and relevant.
+- Example UI:
+  ![AI suggestions screenshot](image.png)
+
 ## 🚧 Future Enhancements
 
 - [ ] Receipt scanning and OCR
