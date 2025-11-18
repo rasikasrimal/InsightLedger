@@ -223,6 +223,9 @@ This document summarizes the comprehensive feature enhancements made to the Insi
     - 3-6 suggestions that update dynamically
     - Inspired by personal finance principles
     - Max 80 characters each for quick readability
+    - Enhanced error handling with status codes
+    - Debug logging for troubleshooting
+    - Visible error messages when API fails
   - Suggested question chips (legacy examples):
     - "Where did I overspend?"
     - "Why are expenses higher?"

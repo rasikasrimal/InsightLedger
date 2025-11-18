@@ -214,6 +214,11 @@ The platform provides intelligent insights including:
   - Current month financial data
   - Personal finance principles (cashflow, savings, long-term thinking)
   - User's spending patterns and budget status
+- Comprehensive error handling and debugging:
+  - Detailed console logging for API interactions
+  - Specific error messages for different failure scenarios
+  - HTTP status code reporting (401, 500, network errors)
+  - Visible error notifications on the UI
 
 ## 🚧 Future Enhancements
 

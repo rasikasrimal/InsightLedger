@@ -77,6 +77,12 @@ Successfully implemented comprehensive production-level features across all 5 ma
   - Generates context-aware financial advice
   - Focuses on cashflow, savings habits, and long-term thinking
   - Avoids specific investment products and tax advice
+- **Error Handling & Debug Features**:
+  - Comprehensive console logging for API calls
+  - Detailed error messages with HTTP status codes
+  - Specific error states (401 auth, 500 server, network errors)
+  - Visible error messages displayed on UI
+  - Full response logging for troubleshooting
 
 ### 🔧 Technical Implementation Details
 
