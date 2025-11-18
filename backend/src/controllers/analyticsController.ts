@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import Transaction from '../models/Transaction';
 import Budget from '../models/Budget';
 import { AuthRequest } from '../types';
-import { generateFinancialAnswer } from '../services/geminiService';
+import { generateFinancialAnswer, generateSuggestionPrompts } from '../services/geminiService';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -451,5 +451,114 @@ Guidelines:
   } catch (error) {
     console.error('Ask AI error:', error);
     res.status(502).json({ error: (error as Error)?.message || 'Failed to get AI response' });
+  }
+};
+
+export const getSuggestionPrompts = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Get recent messages from request body (optional)
+    const { recentMessages = [] } = req.body;
+
+    // Gather financial data for the current month
+    const [incomeAgg, expenseAgg, categorySpend, budgets, savingsGoals] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'income', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'expense', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]),
+      Transaction.aggregate([
+        { $match: { userId: userObjectId, type: 'expense', date: { $gte: startOfMonth, $lte: now } } },
+        { $group: { _id: '$categoryId', spent: { $sum: '$amount' } } },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'category'
+          }
+        },
+        { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+        { $sort: { spent: -1 } },
+        { $limit: 5 }
+      ]),
+      Budget.find({
+        userId: userObjectId,
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      })
+        .populate('categoryId')
+        .lean(),
+      // Placeholder for savings goals - could be from a separate model if exists
+      Promise.resolve([])
+    ]);
+
+    const totalIncome = incomeAgg[0]?.total || 0;
+    const totalExpenses = expenseAgg[0]?.total || 0;
+    const currentBalance = totalIncome - totalExpenses;
+
+    // Build active budgets with spent amounts
+    const activeBudgets = await Promise.all(
+      budgets.map(async (budget) => {
+        const spent = await Transaction.aggregate([
+          {
+            $match: {
+              userId: budget.userId,
+              categoryId: budget.categoryId,
+              type: 'expense',
+              date: {
+                $gte: budget.startDate,
+                $lte: budget.endDate
+              }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: '$amount' }
+            }
+          }
+        ]);
+
+        const spentAmount = spent[0]?.total || 0;
+        const category: any = budget.categoryId;
+
+        return {
+          name: category?.name || 'Uncategorized',
+          spent: spentAmount,
+          limit: budget.amount
+        };
+      })
+    );
+
+    const financialData = {
+      currency: 'USD',
+      currentBalance,
+      totalIncomeThisMonth: totalIncome,
+      totalExpensesThisMonth: totalExpenses,
+      activeBudgets,
+      savingsGoals: [
+        // Placeholder - would come from actual savings goals model
+      ]
+    };
+
+    const suggestions = await generateSuggestionPrompts(recentMessages, financialData);
+
+    res.json({ suggestions });
+  } catch (error) {
+    console.error('Get suggestion prompts error:', error);
+    res.status(500).json({ error: 'Failed to generate suggestion prompts' });
   }
 };

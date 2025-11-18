@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { analyticsAPI } from '../api/analytics';
 import './AIChatPage.css';
 
@@ -12,23 +12,94 @@ interface ChatMessage {
   model?: string;
 }
 
-const promptTemplates = [
-  'Give me a concise summary of my finances this month.',
-  'Where did I overspend this week?',
-  'List the top 3 categories causing variance.',
-  'Suggest a quick savings plan for the next 30 days.',
-];
-
 const AIChatPage: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>([]);
   const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    'Give me a concise summary of my finances this month.',
+    'Where did I overspend this week?',
+    'List the top 3 categories causing variance.',
+    'Suggest a quick savings plan for the next 30 days.',
+  ]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const lastAssistantMessage = useMemo(
     () => [...aiMessages].reverse().find((msg) => msg.role === 'assistant'),
     [aiMessages]
   );
+
+  // Fetch AI-powered suggestions on mount
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        console.log('Fetching AI suggestions...');
+        const response = await analyticsAPI.getSuggestionPrompts([]);
+        console.log('AI suggestions response:', response);
+        if (response.suggestions && response.suggestions.length > 0) {
+          setSuggestions(response.suggestions);
+          console.log('Updated suggestions:', response.suggestions);
+        } else {
+          console.warn('No suggestions returned from API');
+        }
+      } catch (error: any) {
+        console.error('Failed to fetch suggestions:', error);
+        console.error('Error response:', error.response);
+        console.error('Error details:', error.response?.data || error.message);
+        console.error('Error status:', error.response?.status);
+        
+        // Build detailed error message
+        let errorMsg = 'Unknown error';
+        if (error.response?.data?.error) {
+          errorMsg = error.response.data.error;
+        } else if (error.response?.status === 500) {
+          errorMsg = 'Server error - check backend logs';
+        } else if (error.response?.status === 401) {
+          errorMsg = 'Not authenticated';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        setStatusNote(`Failed to load AI suggestions: ${errorMsg}`);
+        // Keep default suggestions on error
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, []);
+
+  // Refresh suggestions after each assistant message
+  useEffect(() => {
+    if (!lastAssistantMessage) return;
+
+    const refreshSuggestions = async () => {
+      try {
+        console.log('Refreshing AI suggestions based on conversation...');
+        // Convert chat messages to the format expected by the API
+        const recentMessages = aiMessages.slice(-6).map((msg) => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          content: msg.content
+        }));
+
+        console.log('Sending recent messages:', recentMessages);
+        const response = await analyticsAPI.getSuggestionPrompts(recentMessages);
+        console.log('Refreshed suggestions response:', response);
+        if (response.suggestions && response.suggestions.length > 0) {
+          setSuggestions(response.suggestions);
+          console.log('Updated suggestions after chat:', response.suggestions);
+        }
+      } catch (error: any) {
+        console.error('Failed to refresh suggestions:', error);
+        console.error('Refresh error details:', error.response?.data || error.message);
+      }
+    };
+
+    refreshSuggestions();
+  }, [lastAssistantMessage, aiMessages]);
 
   const handleAiQuery = async () => {
     const prompt = aiQuery.trim();
@@ -71,12 +142,14 @@ const AIChatPage: React.FC = () => {
     setStatusNote(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClear = () => {
     setAiMessages([]);
     setAiQuery('');
     setStatusNote(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCopyLastReply = async () => {
     if (!lastAssistantMessage) {
       setStatusNote('No reply to copy yet.');
@@ -140,11 +213,15 @@ const AIChatPage: React.FC = () => {
       <div className="composer-bar">
         <div className="composer-shell">
           <div className="quick-row flex flex-wrap justify-start px-4 md:px-5">
-            {promptTemplates.map((template) => (
-              <button key={template} className="chip" type="button" onClick={() => handleTemplate(template)}>
-                {template}
-              </button>
-            ))}
+            {suggestionsLoading ? (
+              <span className="chatgpt-subtitle">Loading suggestions...</span>
+            ) : (
+              suggestions.map((template) => (
+                <button key={template} className="chip" type="button" onClick={() => handleTemplate(template)}>
+                  {template}
+                </button>
+              ))
+            )}
             {statusNote && <span className="chatgpt-subtitle">{statusNote}</span>}
           </div>
 

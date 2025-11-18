@@ -218,12 +218,20 @@ This document summarizes the comprehensive feature enhancements made to the Insi
   - Gradient purple background
   - Search input for queries
   - "Ask AI" button
-  - Suggested question chips:
+  - AI-generated suggestion prompts:
+    - Context-aware based on recent chat and financial data
+    - 3-6 suggestions that update dynamically
+    - Inspired by personal finance principles
+    - Max 80 characters each for quick readability
+    - Enhanced error handling with status codes
+    - Debug logging for troubleshooting
+    - Visible error messages when API fails
+  - Suggested question chips (legacy examples):
     - "Where did I overspend?"
     - "Why are expenses higher?"
     - "What cost grew most?"
     - "Give me a savings plan"
-  - Interactive query functionality (placeholder)
+  - Interactive query functionality with AI responses
 
 ### UI Enhancements
 - Insight cards with icons
@@ -264,6 +272,8 @@ All pages integrate with existing backend APIs:
 - `/api/analytics/insights` - AI insights
 - `/api/analytics/spending-by-category` - Category spending
 - `/api/analytics/monthly-trends` - Trend data
+- `/api/analytics/ask` - AI chat queries
+- `/api/analytics/suggestions` - AI-generated suggestion prompts
 - `/api/transactions` - Transaction CRUD
 - `/api/budgets` - Budget CRUD
 - `/api/categories` - Category CRUD

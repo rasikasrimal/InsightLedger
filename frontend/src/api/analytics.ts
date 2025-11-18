@@ -29,5 +29,12 @@ export const analyticsAPI = {
   askAI: async (question: string): Promise<{ answer: string }> => {
     const response = await apiClient.post<{ answer: string }>('/analytics/ask', { question });
     return response.data;
+  },
+
+  getSuggestionPrompts: async (recentMessages?: Array<{ role: string; content: string }>): Promise<{ suggestions: string[] }> => {
+    const response = await apiClient.post<{ suggestions: string[] }>('/analytics/suggestions', { 
+      recentMessages: recentMessages || [] 
+    });
+    return response.data;
   }
 };
