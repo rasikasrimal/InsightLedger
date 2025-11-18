@@ -11,6 +11,7 @@ import TransactionsPage from './pages/TransactionsPage';
 import BudgetsPage from './pages/BudgetsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AIChatPage from './pages/AIChatPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -69,6 +70,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <AnalyticsPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/ai-chat"
+              element={
+                <PrivateRoute>
+                  <AIChatPage />
                 </PrivateRoute>
               }
             />

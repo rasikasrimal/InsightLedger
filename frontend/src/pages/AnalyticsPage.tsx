@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { analyticsAPI } from '../api/analytics';
 import { categoriesAPI } from '../api/categories';
 import { MonthlyTrend, SpendingByCategory, Category } from '../types';
@@ -8,6 +9,7 @@ import './AnalyticsPage.css';
 const COLORS = ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', '#00BCD4', '#FF9800', '#E91E63'];
 
 const AnalyticsPage: React.FC = () => {
+  const location = useLocation();
   const [trends, setTrends] = useState<MonthlyTrend[]>([]);
   const [spending, setSpending] = useState<SpendingByCategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,6 +40,15 @@ const AnalyticsPage: React.FC = () => {
 
     fetchAnalytics();
   }, []);
+
+  useEffect(() => {
+    if (location.hash === '#ai-insights') {
+      const element = document.getElementById('ai-insights');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
 
   const calculateTrendChange = () => {
     if (trends.length < 2) return null;
@@ -271,7 +282,7 @@ const AnalyticsPage: React.FC = () => {
       </div>
 
       {/* AI Insights Panel */}
-      <div className="card ai-panel">
+      <div className="card ai-panel" id="ai-insights">
         <h2>🤖 AI Financial Insights</h2>
         <div className="ai-query-section">
           <p className="ai-description">
