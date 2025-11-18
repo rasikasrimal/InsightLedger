@@ -5,6 +5,7 @@
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 16px;
   line-height: 1.6;
+  display: flex;
 }
 
 .chatgpt-shell {
@@ -217,13 +218,29 @@
   gap: 10px;
 }
 
-.quick-row {
+.quick-row-mobile {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  padding-left: 20px;
-  padding-right: 20px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a #1a1a1a;
+}
+
+.quick-row-mobile::-webkit-scrollbar {
+  height: 6px;
+}
+
+.quick-row-mobile::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.quick-row-mobile::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 3px;
 }
 
 .chip {
@@ -234,11 +251,32 @@
   padding: 6px 12px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .chip:hover {
   background: #fff;
   color: #000;
+}
+
+.chip-sidebar {
+  border: 1px solid #3a3a3a;
+  background: transparent;
+  color: #e5e5e5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.chip-sidebar:hover {
+  background: #2d2d2d;
+  border-color: #fff;
 }
 
 .composer {
