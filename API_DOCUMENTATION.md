@@ -415,6 +415,61 @@ Response (200):
 }
 ```
 
+#### Ask AI
+- **POST** `/analytics/ask`
+- **Protected**
+
+Request Body:
+```json
+{
+  "question": "Where did I overspend this month?"
+}
+```
+
+Response (200):
+```json
+{
+  "answer": "Based on your financial data, you overspent primarily in the Dining category ($450) and Transport ($230) this month. These two categories combined account for 65% of your overspending compared to typical patterns."
+}
+```
+
+#### Get Suggestion Prompts
+- **POST** `/analytics/suggestions`
+- **Protected**
+
+Request Body:
+```json
+{
+  "recentMessages": [
+    {
+      "role": "user",
+      "content": "Where did I overspend?"
+    },
+    {
+      "role": "model",
+      "content": "You overspent in Dining and Transport categories."
+    }
+  ]
+}
+```
+
+Response (200):
+```json
+{
+  "suggestions": [
+    "How can I redirect dining savings toward my emergency fund?",
+    "What spending patterns am I not noticing in my transport category?",
+    "Is my current surplus enough for long-term wealth building?",
+    "Which expenses could I reduce without impacting my lifestyle?"
+  ]
+}
+```
+
+Note: Suggestions are AI-generated, context-aware prompts (3-6 items, max 80 characters each) based on:
+- User's recent chat messages
+- Current month financial data (income, expenses, budgets)
+- Personal finance principles (cashflow, savings, long-term thinking)
+
 ### Health Check
 
 #### Get API Health Status

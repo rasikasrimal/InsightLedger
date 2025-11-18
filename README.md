@@ -11,6 +11,7 @@ InsightLedger is a full-stack MERN (MongoDB, Express, React, Node.js) applicatio
 - **Budget Tracking**: Set and monitor budgets by category with real-time spending updates
 - **Category Management**: Organize transactions with customizable categories
 - **AI-Powered Insights**: Get intelligent recommendations based on spending patterns
+- **AI Chat Assistant**: Interactive chat with context-aware suggestion prompts for better financial questions
 - **Analytics Dashboard**: Visualize financial data with charts and reports
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Security First**: Built with industry-standard security practices
@@ -152,6 +153,8 @@ npm run build
 - `GET /api/analytics/spending-by-category` - Get spending breakdown
 - `GET /api/analytics/monthly-trends` - Get monthly income/expense trends
 - `GET /api/analytics/insights` - Get AI-powered insights
+- `POST /api/analytics/ask` - Ask AI financial questions
+- `POST /api/analytics/suggestions` - Get AI-generated suggestion prompts
 
 ## 🔒 Security Features
 
@@ -205,6 +208,12 @@ The platform provides intelligent insights including:
 - Category-wise spending recommendations
 - Month-over-month comparisons
 - Personalized financial tips
+- Interactive AI chat with context-aware suggestions
+- Dynamic suggestion prompts based on:
+  - Recent chat conversation history
+  - Current month financial data
+  - Personal finance principles (cashflow, savings, long-term thinking)
+  - User's spending patterns and budget status
 
 ## 🚧 Future Enhancements
 

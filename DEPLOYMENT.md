@@ -36,7 +36,11 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/insightledger
 JWT_SECRET=your-very-secure-random-string-change-this
 FRONTEND_URL=http://localhost:3000
+GEMINI_API_KEY=your-gemini-api-key-here
+GEMINI_MODEL=gemini-flash-latest
 ```
+
+Note: Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 
 **Frontend (.env):**
 ```env

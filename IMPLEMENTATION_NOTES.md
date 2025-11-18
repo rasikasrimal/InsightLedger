@@ -59,7 +59,24 @@ Successfully implemented comprehensive production-level features across all 5 ma
 - **Category Breakdown**: List view with progress bars and percentages
 - **Monthly Trends**: Line chart with 6 months of data and trend analysis
 - **Category Comparison**: Bar chart for all categories
-- **AI Query Panel**: Interactive panel with search input and suggested questions
+- **AI Query Panel**: Interactive panel with search input and AI-powered suggestion prompts
+  - Context-aware suggestions that adapt to user's financial data
+  - Suggestions refresh after each AI response
+  - Based on personal finance principles without direct quotes
+  - 3-6 suggestions, max 80 characters each
+
+#### AI Chat Page (Enhanced)
+- **Dynamic Suggestion Prompts**: 
+  - Fetches AI-generated suggestions on page load
+  - Refreshes suggestions after each assistant response
+  - Passes recent 6 messages for context
+  - Loading state while fetching new suggestions
+  - Fallback to default suggestions on error
+- **AI Integration**:
+  - Uses Google Gemini AI via backend service
+  - Generates context-aware financial advice
+  - Focuses on cashflow, savings habits, and long-term thinking
+  - Avoids specific investment products and tax advice
 
 ### 🔧 Technical Implementation Details
 
@@ -115,9 +132,10 @@ The following were intentionally left as placeholders to keep changes minimal:
    - Reason: PDF generation adds significant dependencies
    - Impact: CSV export fully functional as alternative
 
-6. **AI Query Processing**: Frontend UI complete, backend integration pending
-   - Reason: AI processing requires backend service/API
-   - Impact: Shows placeholder alerts for queries
+6. **AI Chat Integration**: Fully implemented with context-aware suggestions
+   - Feature: AI-powered suggestion prompts using Google Gemini
+   - Status: ✅ Complete with dynamic suggestions based on user context
+   - Impact: Suggestions update based on recent chat and financial data
 
 ### 🎯 Design Decisions
 
@@ -213,6 +231,8 @@ All features assume the following APIs are functional:
 - `GET /api/analytics/insights`
 - `GET /api/analytics/spending-by-category`
 - `GET /api/analytics/monthly-trends?months=6`
+- `POST /api/analytics/ask` - AI chat queries
+- `POST /api/analytics/suggestions` - AI-generated suggestion prompts
 - `GET /api/transactions`
 - `DELETE /api/transactions/:id`
 - `GET /api/budgets?active=true`
