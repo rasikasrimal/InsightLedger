@@ -221,6 +221,9 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .chip {
