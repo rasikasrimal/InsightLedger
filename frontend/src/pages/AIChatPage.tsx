@@ -46,9 +46,23 @@ const AIChatPage: React.FC = () => {
         }
       } catch (error: any) {
         console.error('Failed to fetch suggestions:', error);
+        console.error('Error response:', error.response);
         console.error('Error details:', error.response?.data || error.message);
-        // Show error in status note
-        setStatusNote(`Failed to load AI suggestions: ${error.response?.data?.error || 'Please ensure backend is running'}`);
+        console.error('Error status:', error.response?.status);
+        
+        // Build detailed error message
+        let errorMsg = 'Unknown error';
+        if (error.response?.data?.error) {
+          errorMsg = error.response.data.error;
+        } else if (error.response?.status === 500) {
+          errorMsg = 'Server error - check backend logs';
+        } else if (error.response?.status === 401) {
+          errorMsg = 'Not authenticated';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        setStatusNote(`Failed to load AI suggestions: ${errorMsg}`);
         // Keep default suggestions on error
       } finally {
         setSuggestionsLoading(false);
