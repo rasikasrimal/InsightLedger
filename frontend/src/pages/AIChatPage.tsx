@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { analyticsAPI } from '../api/analytics';
 import './AIChatPage.css';
 
@@ -12,23 +12,67 @@ interface ChatMessage {
   model?: string;
 }
 
-const promptTemplates = [
-  'Give me a concise summary of my finances this month.',
-  'Where did I overspend this week?',
-  'List the top 3 categories causing variance.',
-  'Suggest a quick savings plan for the next 30 days.',
-];
-
 const AIChatPage: React.FC = () => {
   const [aiQuery, setAiQuery] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>([]);
   const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([
+    'Give me a concise summary of my finances this month.',
+    'Where did I overspend this week?',
+    'List the top 3 categories causing variance.',
+    'Suggest a quick savings plan for the next 30 days.',
+  ]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const lastAssistantMessage = useMemo(
     () => [...aiMessages].reverse().find((msg) => msg.role === 'assistant'),
     [aiMessages]
   );
+
+  // Fetch AI-powered suggestions on mount
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        const response = await analyticsAPI.getSuggestionPrompts([]);
+        if (response.suggestions && response.suggestions.length > 0) {
+          setSuggestions(response.suggestions);
+        }
+      } catch (error) {
+        console.error('Failed to fetch suggestions:', error);
+        // Keep default suggestions on error
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, []);
+
+  // Refresh suggestions after each assistant message
+  useEffect(() => {
+    if (!lastAssistantMessage) return;
+
+    const refreshSuggestions = async () => {
+      try {
+        // Convert chat messages to the format expected by the API
+        const recentMessages = aiMessages.slice(-6).map((msg) => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          content: msg.content
+        }));
+
+        const response = await analyticsAPI.getSuggestionPrompts(recentMessages);
+        if (response.suggestions && response.suggestions.length > 0) {
+          setSuggestions(response.suggestions);
+        }
+      } catch (error) {
+        console.error('Failed to refresh suggestions:', error);
+      }
+    };
+
+    refreshSuggestions();
+  }, [lastAssistantMessage, aiMessages]);
 
   const handleAiQuery = async () => {
     const prompt = aiQuery.trim();
@@ -71,12 +115,14 @@ const AIChatPage: React.FC = () => {
     setStatusNote(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClear = () => {
     setAiMessages([]);
     setAiQuery('');
     setStatusNote(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCopyLastReply = async () => {
     if (!lastAssistantMessage) {
       setStatusNote('No reply to copy yet.');
@@ -140,11 +186,15 @@ const AIChatPage: React.FC = () => {
       <div className="composer-bar">
         <div className="composer-shell">
           <div className="quick-row flex flex-wrap justify-start px-4 md:px-5">
-            {promptTemplates.map((template) => (
-              <button key={template} className="chip" type="button" onClick={() => handleTemplate(template)}>
-                {template}
-              </button>
-            ))}
+            {suggestionsLoading ? (
+              <span className="chatgpt-subtitle">Loading suggestions...</span>
+            ) : (
+              suggestions.map((template) => (
+                <button key={template} className="chip" type="button" onClick={() => handleTemplate(template)}>
+                  {template}
+                </button>
+              ))
+            )}
             {statusNote && <span className="chatgpt-subtitle">{statusNote}</span>}
           </div>
 
