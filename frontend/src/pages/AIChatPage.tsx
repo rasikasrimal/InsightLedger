@@ -139,7 +139,7 @@ const AIChatPage: React.FC = () => {
 
       <div className="composer-bar">
         <div className="composer-shell">
-          <div className="quick-row">
+          <div className="quick-row flex flex-wrap justify-start px-4 md:px-5">
             {promptTemplates.map((template) => (
               <button key={template} className="chip" type="button" onClick={() => handleTemplate(template)}>
                 {template}
