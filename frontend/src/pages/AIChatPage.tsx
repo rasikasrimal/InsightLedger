@@ -35,12 +35,20 @@ const AIChatPage: React.FC = () => {
     const fetchSuggestions = async () => {
       setSuggestionsLoading(true);
       try {
+        console.log('Fetching AI suggestions...');
         const response = await analyticsAPI.getSuggestionPrompts([]);
+        console.log('AI suggestions response:', response);
         if (response.suggestions && response.suggestions.length > 0) {
           setSuggestions(response.suggestions);
+          console.log('Updated suggestions:', response.suggestions);
+        } else {
+          console.warn('No suggestions returned from API');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch suggestions:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        // Show error in status note
+        setStatusNote(`Failed to load AI suggestions: ${error.response?.data?.error || 'Please ensure backend is running'}`);
         // Keep default suggestions on error
       } finally {
         setSuggestionsLoading(false);
@@ -56,18 +64,23 @@ const AIChatPage: React.FC = () => {
 
     const refreshSuggestions = async () => {
       try {
+        console.log('Refreshing AI suggestions based on conversation...');
         // Convert chat messages to the format expected by the API
         const recentMessages = aiMessages.slice(-6).map((msg) => ({
           role: msg.role === 'assistant' ? 'model' : 'user',
           content: msg.content
         }));
 
+        console.log('Sending recent messages:', recentMessages);
         const response = await analyticsAPI.getSuggestionPrompts(recentMessages);
+        console.log('Refreshed suggestions response:', response);
         if (response.suggestions && response.suggestions.length > 0) {
           setSuggestions(response.suggestions);
+          console.log('Updated suggestions after chat:', response.suggestions);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to refresh suggestions:', error);
+        console.error('Refresh error details:', error.response?.data || error.message);
       }
     };
 
