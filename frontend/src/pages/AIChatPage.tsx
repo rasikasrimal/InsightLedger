@@ -96,20 +96,6 @@ const AIChatPage: React.FC = () => {
   return (
     <div className="chatgpt-page">
       <div className="chatgpt-shell">
-        <header className="chatgpt-header">
-          <div>
-            <div className="chatgpt-title">
-              <span className="chatgpt-dot" aria-hidden="true" />
-              <h1>AI Chat</h1>
-            </div>
-            <p className="chatgpt-subtitle">Simple, high-contrast replies. No extra chrome.</p>
-          </div>
-          <div className="chatgpt-actions" aria-label="Page actions">
-            <button type="button" onClick={handleClear}>Reset</button>
-            <button type="button" onClick={handleCopyLastReply}>Copy</button>
-          </div>
-        </header>
-
         <main className="chatgpt-main">
           <div className="message-feed">
             {aiMessages.map((msg) => {
@@ -162,30 +148,45 @@ const AIChatPage: React.FC = () => {
             {statusNote && <span className="chatgpt-subtitle">{statusNote}</span>}
           </div>
 
-          <div className="composer">
-            <textarea
-              placeholder="Ask anything..."
-              value={aiQuery}
-              onChange={(e) => setAiQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAiQuery();
-                }
-              }}
-            />
-            <div className="composer-tools">
-              <button type="button" className="icon-button" aria-label="Attach">+</button>
-              <button type="button" className="icon-button" aria-label="Voice">mic</button>
-              <button
-                type="button"
-                className="send-button"
-                aria-label="Send"
-                onClick={handleAiQuery}
-                disabled={aiLoading || !aiQuery.trim()}
-              >
-                Send
-              </button>
+          <div className="unified-composer">
+            <div className="uc-panel" role="group" aria-label="Message composer">
+              <div className="uc-input">
+                <textarea
+                  placeholder="Ask anything"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAiQuery();
+                    }
+                  }}
+                  aria-label="Message text"
+                />
+              </div>
+              <div className="uc-actions">
+                <button
+                  type="button"
+                  className="send-button"
+                  aria-label="Send"
+                  onClick={handleAiQuery}
+                  disabled={aiLoading || !aiQuery.trim()}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M9 16V6.414L5.707 9.707C5.316 10.098 4.683 10.098 4.293 9.707C3.902 9.317 3.902 8.684 4.293 8.293L9.293 3.293L9.369 3.225C9.762 2.904 10.341 2.927 10.707 3.293L15.707 8.293L15.775 8.369C16.096 8.762 16.073 9.341 15.707 9.707C15.341 10.073 14.762 10.096 14.369 9.775L14.293 9.707L11 6.414V16C11 16.552 10.552 17 10 17C9.448 17 9 16.552 9 16Z"
+                      fill="#ffffff"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
