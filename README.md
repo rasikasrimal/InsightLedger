@@ -224,8 +224,8 @@ The platform provides intelligent insights including:
 
 - The AI chat blends your live financial data with distilled principles from popular personal finance books (e.g., **Rich Dad Poor Dad**, **The Psychology of Money**, and similar titles) to surface click-ready suggestions you can ask.
 - Suggestions adjust based on your recent conversation turns and the current month’s budgets/spending, keeping prompts actionable and relevant.
-- Example UI:
-  ![AI suggestions screenshot](image.png)
+- Example UI:<img width="1226" height="917" alt="image" src="https://github.com/user-attachments/assets/8c297284-5e7c-4285-9bf5-fa27e171631e" />
+
 
 ## 🚧 Future Enhancements
 
