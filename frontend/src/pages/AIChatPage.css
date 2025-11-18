@@ -312,43 +312,70 @@
 
 .uc-panel {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  background: #1b1b1b;
-  border: 1px solid #2c2c2c;
-  border-radius: 999px;
-  padding: 8px 12px 8px 14px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  gap: 10px;
+  background: #2d2d2d;
+  border: 1px solid #3a3a3a;
+  border-radius: 28px;
+  padding: 10px 12px 10px 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.uc-leading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uc-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .uc-input {
-  min-height: 48px;
-  max-height: 180px;
+  min-height: 40px;
+  max-height: 140px;
   overflow: hidden;
   display: flex;
+  align-items: center;
 }
 
 .uc-input textarea {
   flex: 1;
+  width: 100%;
   background: transparent;
-  color: #fff;
+  color: #e6e6e6;
   border: none;
   resize: none;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.5;
   outline: none;
-  padding: 4px 6px;
+  padding: 2px 6px;
 }
 
 .uc-input textarea::placeholder {
-  color: #9ca3af;
+  color: #b5b5b5;
 }
 
-.uc-actions {
-  display: flex;
+.uc-icon-btn {
+  height: 36px;
+  width: 36px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: #2d2d2d;
+  color: #d0d0d0;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.uc-icon-btn:hover {
+  background: #3a3a3a;
+  color: #ffffff;
 }
 
 .uc-actions .send-button {
@@ -356,8 +383,8 @@
   width: 36px;
   padding: 0;
   border-radius: 999px;
-  border: 1px solid #2f2f2f;
-  background: #161616;
+  border: 1px solid #1c4f8a;
+  background: #0b65c2;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -376,6 +403,8 @@
   opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
+  background: #2f2f2f;
+  border-color: #2f2f2f;
 }
 
 @media (max-width: 900px) {
